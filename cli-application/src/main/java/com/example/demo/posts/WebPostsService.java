@@ -1,15 +1,20 @@
 package com.example.demo.posts;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.demo.exceptions.GeneralException;
+
 /**
- * Hide the access to the microservice inside this local service.
+ * Webservice client to interact with Posts REST service.
  * 
  * @author Aayushi Raval
  */
@@ -39,43 +44,54 @@ public class WebPostsService {
     }
     
     public Post findPostById(String postId) {
-    	return restTemplate.getForObject(serviceUrl + "/posts/{postId}", Post.class, postId);
+    	try {
+    		return restTemplate.getForObject(serviceUrl + "/posts/{postId}", Post.class, postId);
+    	} catch (Exception e) {
+    		logger.severe(e.getClass() + ": " + e.getLocalizedMessage());
+    		return null;
+    	}
+    	
     }
-
-//    public Account findByNumber(String accountNumber) {
-//
-//        logger.info("findByNumber() invoked: for " + accountNumber);
-//        try {
-//            return restTemplate.getForObject(serviceUrl + "/accounts/{number}", Account.class, accountNumber);
-//        } catch (Exception e) {
-//            logger.severe(e.getClass() + ": " + e.getLocalizedMessage());
-//            return null;
-//        }
-//
-//    }
-//
-//    public List<Account> byOwnerContains(String name) {
-//        logger.info("byOwnerContains() invoked:  for " + name);
-//        Account[] accounts = null;
-//
-//        try {
-//            accounts = restTemplate.getForObject(serviceUrl + "/accounts/owner/{name}", Account[].class, name);
-//        } catch (HttpClientErrorException e) { // 404
-//            // Nothing found
-//        }
-//
-//        if (accounts == null || accounts.length == 0)
-//            return null;
-//        else
-//            return Arrays.asList(accounts);
-//    }
-//
-//    public Account getByNumber(String accountNumber) {
-//        Account account = restTemplate.getForObject(serviceUrl + "/accounts/{number}", Account.class, accountNumber);
-//
-//        if (account == null)
-//            throw new AccountNotFoundException(accountNumber);
-//        else
-//            return account;
-//    }
+    
+    public void createPost(Post post) {
+    	try {
+    		restTemplate.postForLocation(serviceUrl + "/posts", post);
+    	} catch (Exception e) {
+    		logger.severe(e.getClass() + ": " + e.getLocalizedMessage());   
+    		throw new GeneralException("Unable to save Post");
+    	}    	
+    }
+    
+	public List<Post> listAllThreads() {
+		try {
+			ResponseEntity<Post[]> response = restTemplate.getForEntity(serviceUrl + "/threads", Post[].class);
+			Post[] posts = response.getBody();
+			return Arrays.asList(posts);
+		} catch (Exception e) {
+			logger.severe(e.getClass() + ": " + e.getLocalizedMessage());
+			throw new GeneralException("Unable to retrieve threads");
+		}
+	}
+    
+    public List<Post> listAllChildPosts(String postid) {
+    	try {
+    		ResponseEntity<Post[]> response = restTemplate.getForEntity(serviceUrl + "/childposts/{postId}", Post[].class, postid);
+			Post[] posts = response.getBody();
+			return Arrays.asList(posts);
+    	} catch (Exception e) {
+    		logger.severe(e.getClass() + ": " + e.getLocalizedMessage());   
+    		throw new GeneralException("Unable to retrieve replies on post with id: "+postid);
+    	}    	
+    }
+    
+    public List<Post> listAllPosts() {
+    	try {
+    		ResponseEntity<Post[]> response = restTemplate.getForEntity(serviceUrl + "/posts", Post[].class);
+			Post[] posts = response.getBody();
+			return Arrays.asList(posts);
+    	} catch (Exception e) {
+    		logger.severe(e.getClass() + ": " + e.getLocalizedMessage());   
+    		throw new GeneralException("Unable to retrieve posts");
+    	}    	
+    }
 }

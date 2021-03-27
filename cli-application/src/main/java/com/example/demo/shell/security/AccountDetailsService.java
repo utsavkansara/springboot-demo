@@ -9,6 +9,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import com.example.demo.accounts.Account;
 import com.example.demo.accounts.WebAccountsService;
 
+/**
+ * Class for determining authentication with account service
+ * 
+ * @author Aayushi Raval
+ */
 public class AccountDetailsService implements UserDetailsService {
 
     private WebAccountsService webAccountService;

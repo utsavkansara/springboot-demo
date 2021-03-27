@@ -5,6 +5,11 @@ import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * Helper class to set command line colors
+ * 
+ * @author Aayushi Raval
+ */
 public class ShellHelper {
 
     @Value("${shell.out.info}")

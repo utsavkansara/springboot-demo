@@ -12,6 +12,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.shell.jline.JLineShellAutoConfiguration;
 
+/**
+ * Shell script configuration
+ * 
+ * @author Aayushi Raval
+ */
 @Configuration
 public class SpringShellConfig {
 

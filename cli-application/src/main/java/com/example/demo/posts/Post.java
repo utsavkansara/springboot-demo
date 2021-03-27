@@ -1,7 +1,16 @@
 package com.example.demo.posts;
 
-public class Post {
+import java.io.Serializable;
 
+/**
+ * POJO to hold Post data
+ * 
+ * @author Aayushi Raval
+ */
+public class Post implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	
 	private Long postId;
 	private String subject;
 	private String body;
@@ -41,7 +50,7 @@ public class Post {
 	
 	@Override
 	public String toString() {
-		return "Post [postId=" + postId + ", subject=" + subject + ", body=" + body + ", parentPostId=" + parentPostId
+		return "[postId=" + postId + ", subject=" + subject + ", body=" + body + ", parentPostId=" + parentPostId
 				+ "]";
 	}
 	

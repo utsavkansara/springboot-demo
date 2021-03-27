@@ -16,6 +16,11 @@ import com.example.demo.shell.config.InputReader;
 import com.example.demo.shell.config.ShellHelper;
 import com.example.demo.shell.security.SecuredCommand;
 
+/**
+ * Signin Command for authentication
+ * 
+ * @author Aayushi Raval
+ */
 @ShellComponent
 public class SigninCommand extends SecuredCommand {
 

@@ -1,22 +1,17 @@
 package com.example.demo.accounts;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-
-import com.example.demo.exceptions.AccountNotFoundException;
 
 /**
  * Hide the access to the microservice inside this local service.
  * 
- * @author Paul Chapman
+ * @author Aayushi Raval
  */
 public class WebAccountsService {
 
@@ -53,30 +48,5 @@ public class WebAccountsService {
             return null;
         }
 
-    }
-
-    public List<Account> byOwnerContains(String name) {
-        logger.info("byOwnerContains() invoked:  for " + name);
-        Account[] accounts = null;
-
-        try {
-            accounts = restTemplate.getForObject(serviceUrl + "/accounts/owner/{name}", Account[].class, name);
-        } catch (HttpClientErrorException e) { // 404
-            // Nothing found
-        }
-
-        if (accounts == null || accounts.length == 0)
-            return null;
-        else
-            return Arrays.asList(accounts);
-    }
-
-    public Account getByNumber(String accountNumber) {
-        Account account = restTemplate.getForObject(serviceUrl + "/accounts/{number}", Account.class, accountNumber);
-
-        if (account == null)
-            throw new AccountNotFoundException(accountNumber);
-        else
-            return account;
     }
 }

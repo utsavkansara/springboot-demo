@@ -12,6 +12,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.demo.accounts.WebAccountsService;
 
+/**
+ * Spring security configuration
+ * 
+ * @author Aayushi Raval
+ */
 @Configuration
 public class SpringSecurityConfig {
 

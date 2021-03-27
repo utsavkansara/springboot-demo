@@ -1,18 +1,25 @@
 package com.example.demo.shell.commands;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellMethodAvailability;
+import org.springframework.shell.standard.ShellOption;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import com.example.demo.exceptions.GeneralException;
 import com.example.demo.posts.Post;
 import com.example.demo.posts.WebPostsService;
 import com.example.demo.shell.config.InputReader;
 import com.example.demo.shell.config.ShellHelper;
+import com.example.demo.shell.security.SecuredCommand;
 
 @ShellComponent
-public class PostCommand {
+public class PostCommand extends SecuredCommand {
 	
 	@Lazy
 	@Autowired
@@ -23,90 +30,136 @@ public class PostCommand {
 	InputReader inputReader;
 	
 	@Autowired
-	WebPostsService webPostsService;
+	WebPostsService webPostsService;	
 	
-	@ShellMethod("Create a new post")
+	@ShellMethod("Create a new thread")
 	@ShellMethodAvailability("isUserSignedIn")
-	public void createPost() {
-//		if (userService.exists(username)) {
-//			shellHelper.printError(String.format("User with username='%s' already exists --> ABORTING", username));
-//			return;
-//		}
-//		CliUser user = new CliUser();
-//		user.setUsername(username);
-//
-//		// 1. read user's fullName --------------------------------------------
-//		do {
-//			String fullName = inputReader.prompt("Full name");
-//			if (StringUtils.hasText(fullName)) {
-//				user.setFullName(fullName);
-//			} else {
-//				shellHelper.printWarning("User's full name CAN NOT be empty string? Please enter valid value!");
-//			}
-//		} while (user.getFullName() == null);
-//
-//		// 2. read user's password --------------------------------------------
-//		do {
-//			String password = inputReader.prompt("Password", "secret", false);
-//			if (StringUtils.hasText(password)) {
-//				user.setPassword(password);
-//			} else {
-//				shellHelper.printWarning("Password'CAN NOT be empty string? Please enter valid value!");
-//			}
-//		} while (user.getPassword() == null);
-//
-//		// 3. read user's Gender ----------------------------------------------
-//		Map<String, String> options = new HashMap<>();
-//		options.put("M", Gender.MALE.name());
-//		options.put("F", Gender.FEMALE.name());
-//		options.put("D", Gender.DIVERSE.name());
-//		String genderValue = inputReader.selectFromList("Gender", "Please enter one of the [] values", options, true,
-//				null);
-//		Gender gender = Gender.valueOf(options.get(genderValue.toUpperCase()));
-//		user.setGender(gender);
-//		
-//		// 4. Prompt for superuser attribute ------------------------------
-//		String superuserValue = inputReader.promptWithOptions("New user is superuser", "N", Arrays.asList("Y", "N"));
-//		if ("Y".equals(superuserValue)) {
-//		    user.setSuperuser(true);
-//		} else {
-//		    user.setSuperuser(false);
-//		}
-//
-//		// Print user's input -------------------------------------------------
-//		shellHelper.printInfo("\nCreating new user:");
-//		shellHelper.print("\nUsername: " + user.getUsername());
-//		shellHelper.print("Password: " + user.getPassword());
-//		shellHelper.print("Fullname: " + user.getFullName());
-//		shellHelper.print("Gender: " + user.getGender());
-//		shellHelper.print("Superuser: " + user.isSuperuser() + "\n");
-//
-//		CliUser createdUser = userService.create(user);
-//		shellHelper.printSuccess("Created user with id=" + createdUser.getId());
-	}
-	
-	@ShellMethod("Reply to a post")
-	@ShellMethodAvailability("isUserSignedIn")
-	public void replyToPost() {
+	public void createNewThread() {
+		Post post = new Post();
 		
+		// 1. read subject --------------------------------------------
+		do {
+			String subject = inputReader.prompt("Subject");
+			if (StringUtils.hasText(subject)) {
+				post.setSubject(subject);
+			} else {
+				shellHelper.printWarning("Subject of thread CAN NOT be empty string. Please enter valid value!");
+			}
+		} while (!StringUtils.hasText(post.getSubject()));
+		
+		// 2. read body -----------------------------------------------
+		do {
+			String body = inputReader.prompt("Body");
+			if (StringUtils.hasText(body)) {
+				post.setBody(body);
+			} else {
+				shellHelper.printWarning("Body of thread CAN NOT be empty string. Please enter valid value!");
+			}
+		} while (!StringUtils.hasText(post.getBody()));
+
+		// Print user's input -------------------------------------------------
+		shellHelper.printInfo("\nCreating Thread:");
+		shellHelper.print("\nSubject: " + post.getSubject());
+		shellHelper.print("Body: " + post.getBody()+ "\n");
+
+		webPostsService.createPost(post);
+		shellHelper.printSuccess("Created thread successfully");
+	}
+
+	@ShellMethod("Reply to a post or a thread. Pass thread post id or parent post id based on requirement")
+	@ShellMethodAvailability("isUserSignedIn")
+	public void replyToAThreadOrPost() {
+		Post post = new Post();
+		
+		// 1. read subject --------------------------------------------
+		String subject = inputReader.prompt("Subject");
+		post.setSubject(subject);	
+		
+		// 2. read body -----------------------------------------------
+		do {
+			String body = inputReader.prompt("Body");
+			if (StringUtils.hasText(body)) {
+				post.setBody(body);
+			} else {
+				shellHelper.printWarning("Body CAN NOT be empty string. Please enter valid value!");
+			}
+		} while (!StringUtils.hasText(post.getBody()));
+		
+		// 3. read thread post id or parent post id -----------------------------------------------
+		do {
+			String parentPostId = inputReader.prompt("threadpostid/parentpostid");
+			if (StringUtils.hasText(parentPostId)) {				
+				if(webPostsService.findPostById(parentPostId) == null) {
+					shellHelper.printWarning("threadpostid/parentpostid doesn't exist in the system. Please enter valid value!");
+				} else {
+					post.setParentPostId(Long.valueOf(parentPostId));
+				}
+			} else {
+				shellHelper.printWarning("threadpostid/parentpostid CAN NOT be empty string while creating reply. Please enter valid value!");
+			}
+		} while (!StringUtils.hasText(post.getBody()));
+
+		// Print user's input -------------------------------------------------
+		shellHelper.printInfo("\nCreating Reply post:");
+		shellHelper.print("\nSubject: " + post.getSubject());
+		shellHelper.print("\nBody: " + post.getBody());
+		shellHelper.print("threadid/parentpostid: " + post.getParentPostId()+ "\n");
+
+		webPostsService.createPost(post);
+		shellHelper.printSuccess("Submitted reply successfully");
 	}
 	
 	@ShellMethod("List all threads")
 	@ShellMethodAvailability("isUserSignedIn")
 	public void listAllThreads() {
-		
+		List<Post> threads = webPostsService.listAllThreads();
+		if(!CollectionUtils.isEmpty(threads)) {
+			for(Post thread: threads) {
+				shellHelper.printSuccess(thread.toString());
+			}
+		}else {
+			shellHelper.printSuccess("No threads found !");
+		}
 	}
 	
-	@ShellMethod("List replies on the post")
+	@ShellMethod("List of replies on the post")
 	@ShellMethodAvailability("isUserSignedIn")
-	public void listRepliesOnThePost() {
+	public void listRepliesOnThePost(@ShellOption({"-P", "--postid"}) String postid) {
+		Post post = webPostsService.findPostById(postid);
+		if(post == null) {
+			throw new GeneralException("Post not found");
+		}
 		
+		List<Post> threads = webPostsService.listAllChildPosts(postid);
+		if(!CollectionUtils.isEmpty(threads)) {
+			for(Post thread: threads) {
+				shellHelper.printSuccess(thread.toString());
+			}
+		}else {
+			shellHelper.printSuccess("No replies found !");
+		}		
 	}
 	
-	@ShellMethod("View a post")
-//	@ShellMethodAvailability("isUserSignedIn")
-	public void getPost() {
-		Post post = webPostsService.findPostById("1");
+	@ShellMethod("View a post by id")
+	@ShellMethodAvailability("isUserSignedIn")
+	public void getPost(@ShellOption({"-P", "--postid"}) String postid) {
+		Post post = webPostsService.findPostById(postid);
+		if(post == null) {
+			throw new GeneralException("Post not found");
+		}
 		shellHelper.printSuccess(post.toString());
+	}
+	
+	@ShellMethod("List all the posts from the system")
+	@ShellMethodAvailability("isUserSignedIn")
+	public void getAllPosts() {
+		List<Post> posts = webPostsService.listAllPosts();
+		if(!CollectionUtils.isEmpty(posts)) {
+			for(Post post: posts) {
+				shellHelper.printSuccess(post.toString());
+			}
+		}else {
+			shellHelper.printSuccess("No posts found in the system!");
+		}
 	}
 }
